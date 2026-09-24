@@ -366,11 +366,15 @@ impl Cipher for CipherAesGcm {
 
         copy_slices!(ciphertext[..message_len], out);
 
+        let tag: &[u8; TAGLEN] = ciphertext[message_len..]
+            .try_into()
+            .map_err(|_| Error::Decrypt)?;
+
         aead.decrypt_in_place_detached(
             &nonce_bytes.into(),
             authtext,
             &mut out[..message_len],
-            ciphertext[message_len..].into(),
+            tag.into(),
         )
         .map(|()| message_len)
         .map_err(|_| Error::Decrypt)
@@ -416,12 +420,16 @@ impl Cipher for CipherChaChaPoly {
 
         copy_slices!(ciphertext[..message_len], out);
 
+        let tag: &[u8; TAGLEN] = ciphertext[message_len..]
+            .try_into()
+            .map_err(|_| Error::Decrypt)?;
+
         ChaCha20Poly1305::new(&self.key.into())
             .decrypt_in_place_detached(
                 &nonce_bytes.into(),
                 authtext,
                 &mut out[..message_len],
-                ciphertext[message_len..].into(),
+                tag.into(),
             )
             .map_err(|_| Error::Decrypt)?;
 
@@ -468,12 +476,16 @@ impl Cipher for CipherXChaChaPoly {
 
         copy_slices!(ciphertext[..message_len], out);
 
+        let tag: &[u8; TAGLEN] = ciphertext[message_len..]
+            .try_into()
+            .map_err(|_| Error::Decrypt)?;
+
         XChaCha20Poly1305::new(&self.key.into())
             .decrypt_in_place_detached(
                 &nonce_bytes.into(),
                 authtext,
                 &mut out[..message_len],
-                ciphertext[message_len..].into(),
+                tag.into(),
             )
             .map_err(|_| Error::Decrypt)?;
 
